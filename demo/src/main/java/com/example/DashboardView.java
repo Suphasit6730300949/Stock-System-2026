@@ -12,8 +12,8 @@ public class DashboardView extends JFrame {
 
     private JTable table;
     private DefaultTableModel tableModel;
+    private JTextField searchField;
 
-    // DI: ItemModel injected via constructor
     public DashboardView(ItemModel itemModel, MainController controller) {
         this.itemModel = itemModel;
         this.controller = controller;
@@ -30,13 +30,29 @@ public class DashboardView extends JFrame {
         getContentPane().setBackground(new Color(245, 247, 250));
 
         // ─── Header ───────────────────────────────────────────
-        JPanel headerPanel = new JPanel(new BorderLayout());
+        JPanel headerPanel = new JPanel(new BorderLayout(12, 0));
         headerPanel.setBackground(new Color(37, 99, 235));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
 
         JLabel titleLabel = new JLabel("Inventory");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
         titleLabel.setForeground(Color.WHITE);
+
+        // ── Search field ──
+        searchField = new JTextField();
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        searchField.setPreferredSize(new Dimension(220, 34));
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(147, 197, 253), 1),
+            BorderFactory.createEmptyBorder(4, 12, 4, 12)
+        ));
+
+        // filter ทุกครั้งที่พิมพ์
+        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e)  { filterTable(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e)  { filterTable(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { filterTable(); }
+        });
 
         JButton addBtn = new JButton("Add item");
         addBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -48,12 +64,18 @@ public class DashboardView extends JFrame {
         addBtn.setBorder(BorderFactory.createEmptyBorder(8, 18, 8, 18));
         addBtn.addActionListener(e -> controller.openAddItemView());
 
+        // จัด layout: Title | Search | AddBtn
+        JPanel centerHeader = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        centerHeader.setOpaque(false);
+        centerHeader.add(searchField);
+
         headerPanel.add(titleLabel, BorderLayout.WEST);
+        headerPanel.add(centerHeader, BorderLayout.CENTER);
         headerPanel.add(addBtn, BorderLayout.EAST);
         add(headerPanel, BorderLayout.NORTH);
 
         // ─── Table ────────────────────────────────────────────
-        String[] columns = {"Name", "Price (฿)","Quantity", "Category"};
+        String[] columns = {"Name", "Quantity", "Category"};
         tableModel = new DefaultTableModel(columns, 0) {
             public boolean isCellEditable(int row, int col) { return false; }
         };
@@ -80,8 +102,11 @@ public class DashboardView extends JFrame {
                 if (e.getClickCount() == 2) {
                     int row = table.getSelectedRow();
                     if (row >= 0) {
-                        Item selected = itemModel.getItems().get(row);
-                        controller.openDetailView(selected);
+                        String selectedName = (String) tableModel.getValueAt(row, 0);
+                        Item selected = itemModel.getItems().stream()
+                            .filter(i -> i.getName().equals(selectedName))
+                            .findFirst().orElse(null);
+                        if (selected != null) controller.openDetailView(selected);
                     }
                 }
             }
@@ -108,8 +133,11 @@ public class DashboardView extends JFrame {
         deleteBtn.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row >= 0) {
-                Item selected = itemModel.getItems().get(row);
-                controller.deleteItem(selected);
+                String selectedName = (String) tableModel.getValueAt(row, 0);
+                Item selected = itemModel.getItems().stream()
+                    .filter(i -> i.getName().equals(selectedName))
+                    .findFirst().orElse(null);
+                if (selected != null) controller.deleteItem(selected);
             } else {
                 JOptionPane.showMessageDialog(this, "Please select item to delete", "Notification", JOptionPane.WARNING_MESSAGE);
             }
@@ -125,15 +153,33 @@ public class DashboardView extends JFrame {
     }
 
     public void refreshTable() {
+        if (searchField != null && !searchField.getText().isBlank()) {
+            filterTable();
+        } else {
+            tableModel.setRowCount(0);
+            for (Item item : itemModel.getItems()) {
+                tableModel.addRow(new Object[]{
+                    item.getName(),
+                    item.getQuantity(),
+                    item.getCategory()
+                });
+            }
+        }
+    }
+
+    private void filterTable() {
+        String keyword = searchField.getText().trim().toLowerCase();
         tableModel.setRowCount(0);
-        List<Item> items = itemModel.getItems();
-        for (Item item : items) {
-            tableModel.addRow(new Object[]{
-                item.getName(),
-                item.getQuantity(),
-                item.getCategory()
-            });
+        for (Item item : itemModel.getItems()) {
+            if (keyword.isEmpty()
+                    || item.getName().toLowerCase().contains(keyword)
+                    || item.getCategory().toLowerCase().contains(keyword)) {
+                tableModel.addRow(new Object[]{
+                    item.getName(),
+                    item.getQuantity(),
+                    item.getCategory()
+                });
+            }
         }
     }
 }
-
