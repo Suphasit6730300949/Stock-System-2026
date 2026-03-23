@@ -153,24 +153,26 @@ public class DetailView extends JDialog {
         saveBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         saveBtn.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
         saveBtn.addActionListener(e -> {
-            String name = nameField.getText().trim();
-            if (name.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "name item", "Notification", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            int qty = (int) quantitySpinner.getValue();
-            String cat = (String) categoryCombo.getSelectedItem();
+    String name = nameField.getText().trim();
+    if (name.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "กรุณากรอกชื่อสินค้า", "แจ้งเตือน", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    int qty = (int) quantitySpinner.getValue();
+    String cat = (String) categoryCombo.getSelectedItem();
 
-            if (isNew) {
-                controller.getItemModel().addItem(new Item(name, qty, cat));
-            } else {
-                currentItem.setName(name);
-                currentItem.setQuantity(qty);
-                currentItem.setCategory(cat);
-            }
-            controller.onSave(); // Switch back and refresh
-            dispose();
-        });
+    if (isNew) {
+        controller.getItemModel().addItem(new Item(name, qty, cat));
+    } else {
+        String oldName = currentItem.getName(); // ✅ เก็บชื่อเดิมก่อน
+        currentItem.setName(name);
+        currentItem.setQuantity(qty);
+        currentItem.setCategory(cat);
+        controller.getItemModel().updateItem(oldName, currentItem); // ✅ update MongoDB
+    }
+    controller.onSave();
+    dispose();
+});
 
         btnPanel.add(cancelBtn);
         btnPanel.add(saveBtn);

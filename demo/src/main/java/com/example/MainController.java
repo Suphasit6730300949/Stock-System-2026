@@ -20,7 +20,7 @@ public class MainController {
     public void deleteItem(Item item) {
         int confirm = JOptionPane.showConfirmDialog(
             dashboardView,
-            "delete \"" + item.getName() + "\" sure?",
+            "delete " + item.getName() + " sure?",
             "delete confirm",
             JOptionPane.YES_NO_OPTION
         );

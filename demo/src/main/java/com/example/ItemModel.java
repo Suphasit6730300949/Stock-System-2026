@@ -3,12 +3,18 @@ package com.example;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class ItemModel {
     private List<Item> items = new ArrayList<>();
     private List<String> categories = new ArrayList<>();
+    private MongoDBHelper db; // ✅ เพิ่ม
 
     public ItemModel() {
-        // Default categories
+        db = new MongoDBHelper(); // ✅ เชื่อม MongoDB
+
+        // โหลดข้อมูลจาก DB มาแสดง
+        items = db.loadAllItems();
+
         categories.add("Household");
         categories.add("Personal Care");
         categories.add("Electronics");
@@ -17,11 +23,18 @@ public class ItemModel {
 
     public void addItem(Item item) {
         items.add(item);
+        db.insertItem(item); // ✅ บันทึกลง MongoDB
     }
 
-    // Business logic: deleteItem
     public void deleteItem(Item item) {
         items.remove(item);
+        db.deleteItem(item.getName()); // ✅ ลบจาก MongoDB
+    }
+
+    public void updateItem(String oldName, Item item) {
+        db.updateItem(oldName, item); // ✅ อัปเดต MongoDB
+        // refresh list
+        items = db.loadAllItems();
     }
 
     public List<Item> getItems() {
