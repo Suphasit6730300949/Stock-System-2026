@@ -166,13 +166,13 @@ public class DashboardView extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
-        getContentPane().setBackground(Color.decode("#ffe6ee"));
+        getContentPane().setBackground(Color.decode("#cdd0d5"));
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setMinimumSize(new Dimension(480, 360));
 
         // ─── Header ───────────────────────────────────────────
         JPanel headerPanel = new JPanel(new GridBagLayout());
-        headerPanel.setBackground(Color.decode("#ff6699"));
+        headerPanel.setBackground(Color.decode("#091A36"));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
 
         GridBagConstraints hgbc = new GridBagConstraints();
@@ -196,7 +196,9 @@ public class DashboardView extends JFrame {
         hgbc.insets = new Insets(0, 0, 0, 12);
         headerPanel.add(searchWrapper, hgbc);
 
-        JButton addBtn = makeRoundedButton("Add item", Color.WHITE, new Color(37, 99, 235));
+        JButton addBtn = makeRoundedButton("Add item", 
+                                                Color.decode("#cdd0d5"), //สีปุ่ม
+                                                Color.decode("#000000")); //สีตัวหนังสือ
         addBtn.addActionListener(e -> controller.openAddItemView());
 
         hgbc.gridx = 2; hgbc.weightx = 0;
@@ -215,17 +217,17 @@ public class DashboardView extends JFrame {
         table = new JTable(tableModel);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         table.setRowHeight(36);
-        table.setSelectionBackground(new Color(219, 234, 254));
-        table.setSelectionForeground(Color.BLACK);
+        table.setSelectionBackground(Color.decode("#abbed7")); 
+        table.setSelectionForeground(Color.decode("#000000"));
         table.setShowVerticalLines(false);
-        table.setGridColor(new Color(229, 231, 235));
+        table.setGridColor(Color.decode("#cdd0d5"));
         table.setIntercellSpacing(new Dimension(0, 1));
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         JTableHeader header = table.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        header.setBackground(new Color(239, 246, 255));
-        header.setForeground(new Color(37, 99, 235));
+        header.setBackground(Color.decode("#6a7686")); //สีหัวตาราง
+        header.setForeground(Color.decode("#ffffff")); //สีตัวหนังสือ ??
         header.setPreferredSize(new Dimension(0, 40));
         header.setReorderingAllowed(false);
 
@@ -254,7 +256,9 @@ public class DashboardView extends JFrame {
         bottomPanel.setBackground(new Color(245, 247, 250));
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 16, 8, 16));
 
-        JButton deleteBtn = makeRoundedButton("Delete Item", new Color(239, 68, 68), Color.WHITE);
+        JButton deleteBtn = makeRoundedButton("Delete Item", 
+                                                    Color.decode("#9e0000"), //สีปุ่ม
+                                                    Color.decode("#ffffff")); //สีตัวหนังสือ
         deleteBtn.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row >= 0) {
