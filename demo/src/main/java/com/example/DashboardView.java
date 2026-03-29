@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.RoundRectangle2D;
 import java.util.List;
 
 public class DashboardView extends JFrame {
@@ -21,57 +22,188 @@ public class DashboardView extends JFrame {
         refreshTable();
     }
 
-    private void buildUI() {
-        setTitle("MyStock Manager");
-        setSize(700, 480);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-        setLayout(new BorderLayout(10, 10));
-        getContentPane().setBackground(new Color(245, 247, 250));
+    // ✅ Custom rounded button with shadow + hover
+    private JButton makeRoundedButton(String text, Color bg, Color fg) {
+        JButton btn = new JButton(text) {
+            private boolean hovered = false;
+            {
+                addMouseListener(new MouseAdapter() {
+                    public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
+                    public void mouseExited (MouseEvent e) { hovered = false; repaint(); }
+                });
+            }
 
-        // ─── Header ───────────────────────────────────────────
-        JPanel headerPanel = new JPanel(new BorderLayout(12, 0));
-        headerPanel.setBackground(new Color(37, 99, 235));
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        JLabel titleLabel = new JLabel("Inventory");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        titleLabel.setForeground(Color.WHITE);
+                int w = getWidth(), h = getHeight();
+                int arc = 18;
 
-        // ── Search field ──
+                // เงา
+                g2.setColor(new Color(0, 0, 0, hovered ? 60 : 35));
+                g2.fill(new RoundRectangle2D.Float(3, 4, w - 6, h - 4, arc, arc));
+
+                // พื้นหลัง
+                g2.setColor(hovered ? bg.darker() : bg);
+                g2.fill(new RoundRectangle2D.Float(0, 0, w - 3, h - 4, arc, arc));
+
+                // ไฮไลท์ขอบบน
+                g2.setColor(new Color(255, 255, 255, 60));
+                g2.setStroke(new BasicStroke(1.2f));
+                g2.draw(new RoundRectangle2D.Float(1, 1, w - 5, h - 6, arc, arc));
+
+                g2.dispose();
+                super.paintComponent(g);
+            }
+
+            @Override
+            public void paintBorder(Graphics g) {}
+        };
+
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setForeground(fg);
+        btn.setBackground(bg);
+        btn.setContentAreaFilled(false);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 22, 14, 22));
+        btn.setOpaque(false);
+        return btn;
+    }
+
+    // ✅ Custom rounded search wrapper with shadow + hover + focus effect
+    private JPanel makeSearchBox() {
         searchField = new JTextField();
         searchField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        searchField.setPreferredSize(new Dimension(220, 34));
-        searchField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(147, 197, 253), 1),
-            BorderFactory.createEmptyBorder(4, 12, 4, 12)
-        ));
+        searchField.setOpaque(false);
+        searchField.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 10));
 
-        // filter ทุกครั้งที่พิมพ์
+        JLabel searchIcon = new JLabel("\uD83D\uDD0D");
+        searchIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 15));
+        searchIcon.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 6));
+        searchIcon.setCursor(new Cursor(Cursor.TEXT_CURSOR));
+        // คลิกที่ icon → focus ที่ field
+        searchIcon.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) { searchField.requestFocusInWindow(); }
+        });
+
+        // wrapper วาด border + เงาเอง
+        JPanel wrapper = new JPanel(new BorderLayout()) {
+            boolean hovered = false;
+            boolean focused = false;
+
+            {
+                // hover
+                addMouseListener(new MouseAdapter() {
+                    public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
+                    public void mouseExited (MouseEvent e) { hovered = false; repaint(); }
+                });
+                // focus จาก searchField
+                searchField.addFocusListener(new FocusAdapter() {
+                    public void focusGained(FocusEvent e) { focused = true;  repaint(); }
+                    public void focusLost (FocusEvent e) { focused = false; repaint(); }
+                });
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int w = getWidth(), h = getHeight();
+                int arc = 18;
+                int shadowAlpha = focused ? 80 : hovered ? 55 : 25;
+
+                // เงา
+                g2.setColor(new Color(0, 0, 0, shadowAlpha));
+                g2.fill(new RoundRectangle2D.Float(3, 4, w - 6, h - 4, arc, arc));
+
+                // พื้นขาว
+                g2.setColor(Color.WHITE);
+                g2.fill(new RoundRectangle2D.Float(0, 0, w - 3, h - 4, arc, arc));
+
+                // border — น้ำเงินเมื่อ focus, ฟ้าอ่อนเมื่อ hover, เทาเมื่อปกติ
+                Color borderColor = focused
+                    ? new Color(37, 99, 235)
+                    : hovered
+                        ? new Color(96, 165, 250)
+                        : new Color(203, 213, 225);
+                float borderWidth = focused ? 2f : 1.5f;
+                g2.setColor(borderColor);
+                g2.setStroke(new BasicStroke(borderWidth));
+                g2.draw(new RoundRectangle2D.Float(
+                    borderWidth / 2, borderWidth / 2,
+                    w - 3 - borderWidth, h - 4 - borderWidth,
+                    arc, arc
+                ));
+
+                g2.dispose();
+            }
+        };
+
+        wrapper.setOpaque(false);
+        wrapper.setMinimumSize(new Dimension(60, 38));
+        wrapper.setPreferredSize(new Dimension(320, 38));
+        // padding เผื่อเงาล่าง
+        wrapper.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 3));
+        wrapper.add(searchIcon, BorderLayout.WEST);
+        wrapper.add(searchField, BorderLayout.CENTER);
+
         searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e)  { filterTable(); }
             public void removeUpdate(javax.swing.event.DocumentEvent e)  { filterTable(); }
             public void changedUpdate(javax.swing.event.DocumentEvent e) { filterTable(); }
         });
 
-        JButton addBtn = new JButton("Add item");
-        addBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        addBtn.setBackground(Color.WHITE);
-        addBtn.setForeground(new Color(37, 99, 235));
-        addBtn.setFocusPainted(false);
-        addBtn.setBorderPainted(false);
-        addBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        addBtn.setBorder(BorderFactory.createEmptyBorder(8, 18, 8, 18));
+        return wrapper;
+    }
+
+    private void buildUI() {
+        setTitle("MyStock Manager");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout(10, 10));
+        getContentPane().setBackground(Color.decode("#ffe6ee"));
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setMinimumSize(new Dimension(480, 360));
+
+        // ─── Header ───────────────────────────────────────────
+        JPanel headerPanel = new JPanel(new GridBagLayout());
+        headerPanel.setBackground(Color.decode("#ff6699"));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
+
+        GridBagConstraints hgbc = new GridBagConstraints();
+        hgbc.gridy = 0;
+        hgbc.anchor = GridBagConstraints.CENTER;
+
+        ShadowLabel titleLabel = new ShadowLabel("Inventory");
+        titleLabel.setFont(new Font("Impact", Font.BOLD, 36));
+        titleLabel.setForeground(Color.WHITE);
+
+        hgbc.gridx = 0; hgbc.weightx = 0;
+        hgbc.fill = GridBagConstraints.NONE;
+        hgbc.insets = new Insets(0, 0, 0, 12);
+        headerPanel.add(titleLabel, hgbc);
+
+        // ✅ search box โค้งมน + เงา + hover/focus
+        JPanel searchWrapper = makeSearchBox();
+
+        hgbc.gridx = 1; hgbc.weightx = 1;
+        hgbc.fill = GridBagConstraints.HORIZONTAL;
+        hgbc.insets = new Insets(0, 0, 0, 12);
+        headerPanel.add(searchWrapper, hgbc);
+
+        JButton addBtn = makeRoundedButton("Add item", Color.WHITE, new Color(37, 99, 235));
         addBtn.addActionListener(e -> controller.openAddItemView());
 
-        // จัด layout: Title | Search | AddBtn
-        JPanel centerHeader = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        centerHeader.setOpaque(false);
-        centerHeader.add(searchField);
+        hgbc.gridx = 2; hgbc.weightx = 0;
+        hgbc.fill = GridBagConstraints.NONE;
+        hgbc.insets = new Insets(0, 0, 0, 0);
+        headerPanel.add(addBtn, hgbc);
 
-        headerPanel.add(titleLabel, BorderLayout.WEST);
-        headerPanel.add(centerHeader, BorderLayout.CENTER);
-        headerPanel.add(addBtn, BorderLayout.EAST);
         add(headerPanel, BorderLayout.NORTH);
 
         // ─── Table ────────────────────────────────────────────
@@ -88,15 +220,15 @@ public class DashboardView extends JFrame {
         table.setShowVerticalLines(false);
         table.setGridColor(new Color(229, 231, 235));
         table.setIntercellSpacing(new Dimension(0, 1));
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        // Header style
         JTableHeader header = table.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 14));
         header.setBackground(new Color(239, 246, 255));
         header.setForeground(new Color(37, 99, 235));
         header.setPreferredSize(new Dimension(0, 40));
+        header.setReorderingAllowed(false);
 
-        // Double-click → DetailView
         table.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
@@ -122,14 +254,7 @@ public class DashboardView extends JFrame {
         bottomPanel.setBackground(new Color(245, 247, 250));
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 16, 8, 16));
 
-        JButton deleteBtn = new JButton("Delete Item");
-        deleteBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        deleteBtn.setBackground(new Color(239, 68, 68));
-        deleteBtn.setForeground(Color.WHITE);
-        deleteBtn.setFocusPainted(false);
-        deleteBtn.setBorderPainted(false);
-        deleteBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        deleteBtn.setBorder(BorderFactory.createEmptyBorder(8, 18, 8, 18));
+        JButton deleteBtn = makeRoundedButton("Delete Item", new Color(239, 68, 68), Color.WHITE);
         deleteBtn.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row >= 0) {

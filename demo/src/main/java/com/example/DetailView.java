@@ -13,13 +13,11 @@ public class DetailView extends JDialog {
     private JComboBox<String> categoryCombo;
     private JTextField newCategoryField;
 
-    // DI: controller injected via constructor
     public DetailView(JFrame parent, MainController controller) {
         super(parent, true);
         this.controller = controller;
     }
 
-    // DI: item injected via showDetailView() method
     public void showDetailView(Item item) {
         this.currentItem = item;
         boolean isNew = (item == null);
@@ -68,7 +66,7 @@ public class DetailView extends JDialog {
 
         // Quantity
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0;
-        JLabel qtyLbl = new JLabel("Qualtity:");
+        JLabel qtyLbl = new JLabel("Quantity:");
         qtyLbl.setFont(labelFont);
         formPanel.add(qtyLbl, gbc);
 
@@ -79,7 +77,7 @@ public class DetailView extends JDialog {
         quantitySpinner.setFont(fieldFont);
         formPanel.add(quantitySpinner, gbc);
 
-        // Category
+        // Category (dropdown + remove button)
         gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0;
         JLabel catLbl = new JLabel("Category:");
         catLbl.setFont(labelFont);
@@ -90,7 +88,37 @@ public class DetailView extends JDialog {
         categoryCombo = new JComboBox<>(cats.toArray(new String[0]));
         if (!isNew) categoryCombo.setSelectedItem(item.getCategory());
         categoryCombo.setFont(fieldFont);
-        formPanel.add(categoryCombo, gbc);
+
+        // ✅ ปุ่ม Remove category
+        JButton removeCatBtn = new JButton("Remove");
+        removeCatBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        removeCatBtn.setBackground(new Color(239, 68, 68));
+        removeCatBtn.setForeground(Color.WHITE);
+        removeCatBtn.setBorderPainted(false);
+        removeCatBtn.setFocusPainted(false);
+        removeCatBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        removeCatBtn.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
+        removeCatBtn.addActionListener(e -> {
+            String selectedCat = (String) categoryCombo.getSelectedItem();
+            if (selectedCat == null) return;
+
+            int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "ลบ category \"" + selectedCat + "\" ออกจากรายการ?",
+                "ยืนยันการลบ",
+                JOptionPane.YES_NO_OPTION
+            );
+            if (confirm == JOptionPane.YES_OPTION) {
+                controller.getItemModel().removeCategory(selectedCat);
+                categoryCombo.removeItem(selectedCat);
+            }
+        });
+
+        JPanel catPanel = new JPanel(new BorderLayout(6, 0));
+        catPanel.setBackground(Color.WHITE);
+        catPanel.add(categoryCombo, BorderLayout.CENTER);
+        catPanel.add(removeCatBtn, BorderLayout.EAST);
+        formPanel.add(catPanel, gbc);
 
         // Add new category
         gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0;
@@ -134,7 +162,7 @@ public class DetailView extends JDialog {
         btnPanel.setBackground(new Color(249, 250, 251));
         btnPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(229, 231, 235)));
 
-        JButton cancelBtn = new JButton("cancle");
+        JButton cancelBtn = new JButton("cancel");
         cancelBtn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cancelBtn.setBackground(new Color(229, 231, 235));
         cancelBtn.setForeground(new Color(55, 65, 81));
@@ -142,7 +170,7 @@ public class DetailView extends JDialog {
         cancelBtn.setFocusPainted(false);
         cancelBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         cancelBtn.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
-        cancelBtn.addActionListener(e -> dispose()); // Switch back to DashboardView
+        cancelBtn.addActionListener(e -> dispose());
 
         JButton saveBtn = new JButton("save");
         saveBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -153,26 +181,26 @@ public class DetailView extends JDialog {
         saveBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         saveBtn.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
         saveBtn.addActionListener(e -> {
-    String name = nameField.getText().trim();
-    if (name.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "กรุณากรอกชื่อสินค้า", "แจ้งเตือน", JOptionPane.WARNING_MESSAGE);
-        return;
-    }
-    int qty = (int) quantitySpinner.getValue();
-    String cat = (String) categoryCombo.getSelectedItem();
+            String name = nameField.getText().trim();
+            if (name.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "กรุณากรอกชื่อสินค้า", "แจ้งเตือน", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            int qty = (int) quantitySpinner.getValue();
+            String cat = (String) categoryCombo.getSelectedItem();
 
-    if (isNew) {
-        controller.getItemModel().addItem(new Item(name, qty, cat));
-    } else {
-        String oldName = currentItem.getName(); // ✅ เก็บชื่อเดิมก่อน
-        currentItem.setName(name);
-        currentItem.setQuantity(qty);
-        currentItem.setCategory(cat);
-        controller.getItemModel().updateItem(oldName, currentItem); // ✅ update MongoDB
-    }
-    controller.onSave();
-    dispose();
-});
+            if (isNew) {
+                controller.getItemModel().addItem(new Item(name, qty, cat));
+            } else {
+                String oldName = currentItem.getName();
+                currentItem.setName(name);
+                currentItem.setQuantity(qty);
+                currentItem.setCategory(cat);
+                controller.getItemModel().updateItem(oldName, currentItem);
+            }
+            controller.onSave();
+            dispose();
+        });
 
         btnPanel.add(cancelBtn);
         btnPanel.add(saveBtn);
@@ -181,4 +209,3 @@ public class DetailView extends JDialog {
         setVisible(true);
     }
 }
-

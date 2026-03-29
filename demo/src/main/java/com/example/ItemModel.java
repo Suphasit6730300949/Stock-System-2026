@@ -3,37 +3,41 @@ package com.example;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class ItemModel {
     private List<Item> items = new ArrayList<>();
     private List<String> categories = new ArrayList<>();
-    private MongoDBHelper db; // ✅ เพิ่ม
+    private MongoDB db;
 
     public ItemModel() {
-        db = new MongoDBHelper(); // ✅ เชื่อม MongoDB
+        db = new MongoDB();
 
-        // โหลดข้อมูลจาก DB มาแสดง
         items = db.loadAllItems();
 
-        categories.add("Household");
-        categories.add("Personal Care");
-        categories.add("Electronics");
-        categories.add("Stationery");
+        List<String> savedCats = db.loadAllCategories();
+
+        List<String> defaults = List.of("Household", "Personal Care", "Electronics", "Stationery");
+        if (savedCats.isEmpty()) {
+            for (String cat : defaults) {
+                db.insertCategory(cat);
+            }
+            categories.addAll(defaults);
+        } else {
+            categories.addAll(savedCats);
+        }
     }
 
     public void addItem(Item item) {
         items.add(item);
-        db.insertItem(item); // ✅ บันทึกลง MongoDB
+        db.insertItem(item);
     }
 
     public void deleteItem(Item item) {
         items.remove(item);
-        db.deleteItem(item.getName()); // ✅ ลบจาก MongoDB
+        db.deleteItem(item.getName());
     }
 
     public void updateItem(String oldName, Item item) {
-        db.updateItem(oldName, item); // ✅ อัปเดต MongoDB
-        // refresh list
+        db.updateItem(oldName, item);
         items = db.loadAllItems();
     }
 
@@ -44,7 +48,14 @@ public class ItemModel {
     public void addCategory(String category) {
         if (!categories.contains(category)) {
             categories.add(category);
+            db.insertCategory(category);
         }
+    }
+
+    // ✅ ลบ category ออกจาก list และ MongoDB
+    public void removeCategory(String category) {
+        categories.remove(category);
+        db.deleteCategory(category);
     }
 
     public List<String> getCategories() {
