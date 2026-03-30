@@ -538,7 +538,8 @@ public class DashboardView extends JFrame {
                 "\uD83D\uDD22  Quantity: High \u2192 Low",
                 "\uD83D\uDCB0  Price: Low \u2192 High",
                 "\uD83D\uDCB0  Price: High \u2192 Low",
-                "\uD83C\uDFF7  Category: A \u2192 Z",
+                "\uD83D\uDCC5  Date Added: Newest",
+                "\uD83D\uDCC5  Date Added: Oldest",
                 "\u26A0  Out of Stock"
         };
         for (String label : sortLabels) {
@@ -654,8 +655,20 @@ public class DashboardView extends JFrame {
             sorted.sort(java.util.Comparator.comparingDouble(Item::getPrice));
         } else if (mode.contains("Price") && mode.contains("High \u2192 Low")) {
             sorted.sort((a, b) -> Double.compare(b.getPrice(), a.getPrice()));
-        } else if (mode.contains("Category")) {
-            sorted.sort(java.util.Comparator.comparing(i -> i.getCategory().toLowerCase()));
+        } else if (mode.contains("Date Added") && mode.contains("Newest")) {
+            sorted.sort((a, b) -> {
+                if (a.getCreatedAt() == null && b.getCreatedAt() == null) return 0;
+                if (a.getCreatedAt() == null) return 1;
+                if (b.getCreatedAt() == null) return -1;
+                return b.getCreatedAt().compareTo(a.getCreatedAt());
+            });
+        } else if (mode.contains("Date Added") && mode.contains("Oldest")) {
+            sorted.sort((a, b) -> {
+                if (a.getCreatedAt() == null && b.getCreatedAt() == null) return 0;
+                if (a.getCreatedAt() == null) return 1;
+                if (b.getCreatedAt() == null) return -1;
+                return a.getCreatedAt().compareTo(b.getCreatedAt());
+            });
         } else if (mode.contains("Out of Stock")) {
             sorted.removeIf(i -> i.getQuantity() > 0);
         }
