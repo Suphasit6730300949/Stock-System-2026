@@ -22,21 +22,14 @@ public class DashboardView extends JFrame {
         refreshTable();
     }
 
-    // Custom rounded button with shadow + hover
+    //Custom rounded button with shadow + hover
     private JButton makeRoundedButton(String text, Color bg, Color fg) {
         JButton btn = new JButton(text) {
             private boolean hovered = false;
             {
                 addMouseListener(new MouseAdapter() {
-                    public void mouseEntered(MouseEvent e) {
-                        hovered = true;
-                        repaint();
-                    }
-
-                    public void mouseExited(MouseEvent e) {
-                        hovered = false;
-                        repaint();
-                    }
+                    public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
+                    public void mouseExited (MouseEvent e) { hovered = false; repaint(); }
                 });
             }
 
@@ -57,8 +50,8 @@ public class DashboardView extends JFrame {
                 g2.fill(new RoundRectangle2D.Float(0, 0, w - 3, h - 4, arc, arc));
 
                 // ไฮไลท์ขอบบน
-                g2.setColor(new Color(255, 255, 255, 60));
-                g2.setStroke(new BasicStroke(1.2f));
+                g2.setColor(new Color(255, 255, 255, 60)); 
+                g2.setStroke(new BasicStroke(1.2f)); 
                 g2.draw(new RoundRectangle2D.Float(1, 1, w - 5, h - 6, arc, arc));
 
                 g2.dispose();
@@ -66,8 +59,7 @@ public class DashboardView extends JFrame {
             }
 
             @Override
-            public void paintBorder(Graphics g) {
-            }
+            public void paintBorder(Graphics g) {}
         };
 
         btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -82,12 +74,12 @@ public class DashboardView extends JFrame {
         return btn;
     }
 
-    // Custom rounded search wrapper with shadow + hover + focus effect
+    //Custom rounded search wrapper with shadow + hover + focus effect
     private JPanel makeSearchBox() {
         searchField = new JTextField();
         searchField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         searchField.setOpaque(false);
-        searchField.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 10)); // บน, ซ้าย, ล่าง, ขวา
+        searchField.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 10)); //บน, ซ้าย, ล่าง, ขวา
 
         JLabel searchIcon = new JLabel("\uD83D\uDD0D");
 
@@ -96,9 +88,7 @@ public class DashboardView extends JFrame {
         searchIcon.setCursor(new Cursor(Cursor.TEXT_CURSOR));
         // คลิกที่ icon → focus ที่ field
         searchIcon.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                searchField.requestFocusInWindow();
-            }
+            public void mouseClicked(MouseEvent e) { searchField.requestFocusInWindow(); }
         });
 
         // wrapper วาด border + เงาเอง
@@ -109,27 +99,13 @@ public class DashboardView extends JFrame {
             {
                 // hover
                 addMouseListener(new MouseAdapter() {
-                    public void mouseEntered(MouseEvent e) {
-                        hovered = true;
-                        repaint();
-                    }
-
-                    public void mouseExited(MouseEvent e) {
-                        hovered = false;
-                        repaint();
-                    }
+                    public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
+                    public void mouseExited (MouseEvent e) { hovered = false; repaint(); }
                 });
                 // focus จาก searchField
                 searchField.addFocusListener(new FocusAdapter() {
-                    public void focusGained(FocusEvent e) {
-                        focused = true;
-                        repaint();
-                    }
-
-                    public void focusLost(FocusEvent e) {
-                        focused = false;
-                        repaint();
-                    }
+                    public void focusGained(FocusEvent e) { focused = true;  repaint(); }
+                    public void focusLost (FocusEvent e) { focused = false; repaint(); }
                 });
             }
 
@@ -152,17 +128,18 @@ public class DashboardView extends JFrame {
 
                 // border — น้ำเงินเมื่อ focus, ฟ้าอ่อนเมื่อ hover, เทาเมื่อปกติ
                 Color borderColor = focused
-                        ? Color.decode("#b9bbbe")
-                        : hovered
-                                ? Color.decode("#60a5fa") // #60a5fa
-                                : Color.decode("#cbd5e1"); // #cbd5e1
+                    ? Color.decode("#b9bbbe")
+                    : hovered
+                        ? Color.decode("#60a5fa") //#60a5fa
+                        : Color.decode("#cbd5e1"); //#cbd5e1
                 float borderWidth = focused ? 2f : 1.5f;
                 g2.setColor(borderColor);
                 g2.setStroke(new BasicStroke(borderWidth));
                 g2.draw(new RoundRectangle2D.Float(
-                        borderWidth / 2, borderWidth / 2,
-                        w - 3 - borderWidth, h - 4 - borderWidth,
-                        arc, arc));
+                    borderWidth / 2, borderWidth / 2,
+                    w - 3 - borderWidth, h - 4 - borderWidth,
+                    arc, arc
+                ));
 
                 g2.dispose();
             }
@@ -177,17 +154,9 @@ public class DashboardView extends JFrame {
         wrapper.add(searchField, BorderLayout.CENTER);
 
         searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                filterTable();
-            }
-
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                filterTable();
-            }
-
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                filterTable();
-            }
+            public void insertUpdate(javax.swing.event.DocumentEvent e)  { filterTable(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e)  { filterTable(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { filterTable(); }
         });
 
         return wrapper;
@@ -215,8 +184,7 @@ public class DashboardView extends JFrame {
         titleLabel.setFont(new Font("Impact", Font.BOLD, 36));
         titleLabel.setForeground(Color.WHITE);
 
-        hgbc.gridx = 0;
-        hgbc.weightx = 0;
+        hgbc.gridx = 0; hgbc.weightx = 0;
         hgbc.fill = GridBagConstraints.NONE;
         hgbc.insets = new Insets(0, 0, 0, 12);
         headerPanel.add(titleLabel, hgbc);
@@ -224,19 +192,17 @@ public class DashboardView extends JFrame {
         // ✅ search box โค้งมน + เงา + hover/focus
         JPanel searchWrapper = makeSearchBox();
 
-        hgbc.gridx = 1;
-        hgbc.weightx = 1;
+        hgbc.gridx = 1; hgbc.weightx = 1;
         hgbc.fill = GridBagConstraints.HORIZONTAL;
         hgbc.insets = new Insets(0, 0, 0, 12);
         headerPanel.add(searchWrapper, hgbc);
 
-        JButton addBtn = makeRoundedButton("Add item",
-                Color.decode("#cdd0d5"), // สีปุ่ม
-                Color.decode("#000000")); // สีตัวหนังสือ
+        JButton addBtn = makeRoundedButton("Add item", 
+                                                Color.decode("#cdd0d5"), //สีปุ่ม
+                                                Color.decode("#000000")); //สีตัวหนังสือ
         addBtn.addActionListener(e -> controller.openAddItemView());
 
-        hgbc.gridx = 2;
-        hgbc.weightx = 0;
+        hgbc.gridx = 2; hgbc.weightx = 0;
         hgbc.fill = GridBagConstraints.NONE;
         hgbc.insets = new Insets(0, 0, 0, 0);
         headerPanel.add(addBtn, hgbc);
@@ -244,17 +210,15 @@ public class DashboardView extends JFrame {
         add(headerPanel, BorderLayout.NORTH);
 
         // ─── Table ────────────────────────────────────────────
-        String[] columns = { "Name", "Quantity", "Category", "Price (฿)" };
+        String[] columns = {"Name", "Quantity", "Category", "Price (฿)"};
         tableModel = new DefaultTableModel(columns, 0) {
-            public boolean isCellEditable(int row, int col) {
-                return false;
-            }
+            public boolean isCellEditable(int row, int col) { return false; }
         };
 
         table = new JTable(tableModel);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         table.setRowHeight(36);
-        table.setSelectionBackground(Color.decode("#abbed7"));
+        table.setSelectionBackground(Color.decode("#abbed7")); 
         table.setSelectionForeground(Color.decode("#000000"));
         table.setShowVerticalLines(false);
         table.setGridColor(Color.decode("#cdd0d5"));
@@ -263,24 +227,57 @@ public class DashboardView extends JFrame {
 
         JTableHeader header = table.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        header.setBackground(Color.decode("#6a7686")); // สีหัวตาราง
-        header.setForeground(Color.decode("#ffffff")); // สีตัวหนังสือ ??
+        header.setBackground(Color.decode("#6a7686")); //สีหัวตาราง
+        header.setForeground(Color.decode("#ffffff")); //สีตัวหนังสือ ??
         header.setPreferredSize(new Dimension(0, 40));
         header.setReorderingAllowed(false);
 
         table.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    int row = table.getSelectedRow();
+                int row = table.rowAtPoint(e.getPoint());
+                if (row >= 0) table.setRowSelectionInterval(row, row);
+
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
                     if (row >= 0) {
                         String selectedName = (String) tableModel.getValueAt(row, 0);
                         Item selected = itemModel.getItems().stream()
-                                .filter(i -> i.getName().equals(selectedName))
-                                .findFirst().orElse(null);
-                        if (selected != null)
-                            controller.openDetailView(selected);
+                            .filter(i -> i.getName().equals(selectedName))
+                            .findFirst().orElse(null);
+                        if (selected != null) controller.openItemDetailWindow(selected);
                     }
                 }
+            }
+
+            public void mousePressed(MouseEvent e) { showPopup(e); }
+            public void mouseReleased(MouseEvent e) { showPopup(e); }
+
+            private void showPopup(MouseEvent e) {
+                if (!e.isPopupTrigger()) return;
+                int row = table.rowAtPoint(e.getPoint());
+                if (row < 0) return;
+                table.setRowSelectionInterval(row, row);
+
+                String selectedName = (String) tableModel.getValueAt(row, 0);
+                Item selected = itemModel.getItems().stream()
+                    .filter(i -> i.getName().equals(selectedName))
+                    .findFirst().orElse(null);
+                if (selected == null) return;
+
+                JPopupMenu popup = new JPopupMenu();
+
+                JMenuItem editItem = new JMenuItem("✏️  Edit");
+                editItem.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+                editItem.addActionListener(ev -> controller.openDetailView(selected));
+
+                JMenuItem deleteItem = new JMenuItem("🗑️  Delete");
+                deleteItem.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+                deleteItem.setForeground(Color.decode("#9e0000"));
+                deleteItem.addActionListener(ev -> controller.deleteItem(selected));
+
+                popup.add(editItem);
+                popup.addSeparator();
+                popup.add(deleteItem);
+                popup.show(e.getComponent(), e.getX(), e.getY());
             }
         });
 
@@ -291,30 +288,28 @@ public class DashboardView extends JFrame {
 
         // ─── Bottom toolbar ───────────────────────────────────
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 10));
-        bottomPanel.setBackground(Color.decode("#f5f7fa"));
+        bottomPanel.setBackground(Color.decode("#f5f7fa")); 
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 16, 8, 16));
 
-        JButton deleteBtn = makeRoundedButton("Delete Item",
-                Color.decode("#9e0000"), // สีปุ่ม
-                Color.decode("#ffffff")); // สีตัวหนังสือ
+        JButton deleteBtn = makeRoundedButton("Delete Item", 
+                                                    Color.decode("#9e0000"), //สีปุ่ม
+                                                    Color.decode("#ffffff")); //สีตัวหนังสือ
         deleteBtn.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row >= 0) {
                 String selectedName = (String) tableModel.getValueAt(row, 0);
                 Item selected = itemModel.getItems().stream()
-                        .filter(i -> i.getName().equals(selectedName))
-                        .findFirst().orElse(null);
-                if (selected != null)
-                    controller.deleteItem(selected);
+                    .filter(i -> i.getName().equals(selectedName))
+                    .findFirst().orElse(null);
+                if (selected != null) controller.deleteItem(selected);
             } else {
-                JOptionPane.showMessageDialog(this, "Please select item to delete", "Notification",
-                        JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Please select item to delete", "Notification", JOptionPane.WARNING_MESSAGE);
             }
         });
 
-        JLabel hint = new JLabel("double click for edit");
+        JLabel hint = new JLabel("double click to view  |  right click for options");
         hint.setFont(new Font("Segoe UI", Font.ITALIC, 12));
-        hint.setForeground(Color.decode("#6b7280"));
+        hint.setForeground(Color.decode("#6b7280")); 
 
         bottomPanel.add(hint);
         bottomPanel.add(deleteBtn);
@@ -327,11 +322,11 @@ public class DashboardView extends JFrame {
         } else {
             tableModel.setRowCount(0);
             for (Item item : itemModel.getItems()) {
-                tableModel.addRow(new Object[] {
-                        item.getName(),
-                        item.getQuantity(),
-                        item.getCategory(),
-                        String.format("%.2f", item.getPrice())
+                tableModel.addRow(new Object[]{
+                    item.getName(),
+                    item.getQuantity(),
+                    item.getCategory(),
+                    String.format("%.2f", item.getPrice())
                 });
             }
         }
@@ -344,11 +339,11 @@ public class DashboardView extends JFrame {
             if (keyword.isEmpty()
                     || item.getName().toLowerCase().contains(keyword)
                     || item.getCategory().toLowerCase().contains(keyword)) {
-                tableModel.addRow(new Object[] {
-                        item.getName(),
-                        item.getQuantity(),
-                        item.getCategory(),
-                        String.format("%.2f", item.getPrice())
+                tableModel.addRow(new Object[]{
+                    item.getName(),
+                    item.getQuantity(),
+                    item.getCategory(),
+                    String.format("%.2f", item.getPrice())
                 });
             }
         }
