@@ -91,9 +91,10 @@ public class MainController {
         }
 
         // ─ Description ─
+        int r = rows.length;
         String desc = item.getDescription();
         if (desc != null && !desc.isBlank()) {
-            int descRow = rows.length;
+            int descRow = r;
             gbc.gridx = 0;
             gbc.gridy = descRow;
             gbc.weightx = 0;
@@ -118,26 +119,13 @@ public class MainController {
             body.add(descArea, gbc);
             gbc.fill = GridBagConstraints.NONE;
             gbc.anchor = GridBagConstraints.WEST;
+            r++;
         }
 
-        // ─ เส้นคั่น ─
-        gbc.gridx = 0;
-        gbc.gridy = rows.length;
-        gbc.gridwidth = 2;
-        gbc.weightx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(10, 0, 10, 0);
-        JSeparator sep = new JSeparator();
-        sep.setForeground(Color.decode("#e5e7eb"));
-        body.add(sep, gbc);
-        gbc.gridwidth = 1;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.insets = new Insets(5, 6, 5, 6);
-
         // ─ วันที่เพิ่ม ─
-        int r = rows.length + 1;
         gbc.gridx = 0;
         gbc.gridy = r;
+        gbc.insets = new Insets(5, 6, 5, 6);
         gbc.weightx = 0;
         JLabel addedLbl = new JLabel("Added:");
         addedLbl.setFont(lblFont);
