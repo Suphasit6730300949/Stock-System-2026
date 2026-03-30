@@ -242,7 +242,7 @@ public class DashboardView extends JFrame {
         setLayout(new BorderLayout());
         getContentPane().setBackground(BG);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setMinimumSize(new Dimension(600, 400));
+        setMinimumSize(new Dimension(800, 400));
 
         // ── HEADER ────────────────────────────────────────────────────────────
         JPanel headerPanel = new JPanel(new BorderLayout(0, 0)) {
@@ -269,6 +269,9 @@ public class DashboardView extends JFrame {
         JPanel logoArea = new JPanel(new BorderLayout(10, 0));
         logoArea.setOpaque(false);
 
+        logoArea.setPreferredSize(new Dimension(240, 70));
+        logoArea.setMinimumSize(new Dimension(200, 60));
+
         JLabel logoIcon = new JLabel("📦");
         logoIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 26));
 
@@ -278,9 +281,17 @@ public class DashboardView extends JFrame {
         ShadowLabel titleLabel = new ShadowLabel("MyStock");
         titleLabel.setFont(new Font("Impact", Font.BOLD, 30));
         titleLabel.setForeground(Color.WHITE);
+        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        titleLabel.setMaximumSize(titleLabel.getPreferredSize());
+
         JLabel subLabel = new JLabel("Inventory Manager");
         subLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 11));
         subLabel.setForeground(new Color(255, 255, 255, 120));
+        subLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        subLabel.setMaximumSize(subLabel.getPreferredSize());
+
         logoText.add(titleLabel);
         logoText.add(subLabel);
 
@@ -538,8 +549,8 @@ public class DashboardView extends JFrame {
                 "\uD83D\uDD22  Quantity: High \u2192 Low",
                 "\uD83D\uDCB0  Price: Low \u2192 High",
                 "\uD83D\uDCB0  Price: High \u2192 Low",
-                "\uD83D\uDCC5  Date Added: Newest",
-                "\uD83D\uDCC5  Date Added: Oldest",
+                "\uD83D\uDCC5  Date Added: Newest First",
+                "\uD83D\uDCC5  Date Added: Oldest First",
                 "\u26A0  Out of Stock"
         };
         for (String label : sortLabels) {

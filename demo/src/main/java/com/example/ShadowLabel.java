@@ -21,13 +21,16 @@ public class ShadowLabel extends JLabel {
     }
 
     // Fix 1: บอก layout manager ว่า component ต้องการพื้นที่เท่าไหร่
+    // ใช้ ascent+descent+leading แทน bounds.getHeight() เพื่อให้ได้ full line height
+    // ป้องกัน layout manager ตัดหัวตัวอักษรออก
     @Override
     public Dimension getPreferredSize() {
         FontRenderContext frc = getFRC();
         TextLayout layout = new TextLayout(getText(), getFont(), frc);
-        java.awt.geom.Rectangle2D bounds = layout.getBounds();
-        int w = (int) Math.ceil(bounds.getWidth()) + SHADOW_DX + PADDING * 2;
-        int h = (int) Math.ceil(bounds.getHeight()) + SHADOW_DY + PADDING * 2;
+        // ใช้ advance แทน bounds.getWidth() เพราะครอบคลุม left/right bearing ด้วย
+        int w = (int) Math.ceil(layout.getAdvance()) + SHADOW_DX + PADDING * 2 + 10;
+        int h = (int) Math.ceil(layout.getAscent() + layout.getDescent() + layout.getLeading())
+                + SHADOW_DY + PADDING * 2;
         return new Dimension(w, h);
     }
 
