@@ -1,7 +1,9 @@
 package com.example;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.*;
 import java.util.List;
 
 public class DetailView extends JDialog {
@@ -15,294 +17,368 @@ public class DetailView extends JDialog {
     private JSpinner priceSpinner;
     private JTextArea descriptionArea;
 
+    // ── Design tokens ──────────────────────────────────────────────────────────
+    private static final Color BG          = Color.decode("#f8fafc");
+    private static final Color WHITE       = Color.WHITE;
+    private static final Color BORDER_IDLE = Color.decode("#d1d5db");
+    private static final Color BORDER_HOV  = Color.decode("#93c5fd");
+    private static final Color BORDER_FOC  = Color.decode("#3b82f6");
+    private static final Color LBL_COLOR   = Color.decode("#374151");
+    private static final Color HINT_COLOR  = Color.decode("#9ca3af");
+
     public DetailView(JFrame parent, MainController controller) {
         super(parent, true);
         this.controller = controller;
     }
 
-    // ── Replace the "−" decrement button with an "▲" up-arrow button ──────────
+    // ── Styled text field with hover + focus border ────────────────────────────
+    private JTextField makeStyledField(String text) {
+        JTextField f = new JTextField(text) {
+            boolean hov = false;
+            {
+                setBorder(makeBorder(BORDER_IDLE));
+                addMouseListener(new MouseAdapter() {
+                    public void mouseEntered(MouseEvent e) { hov = true;  if (!isFocusOwner()) setBorder(makeBorder(BORDER_HOV));  }
+                    public void mouseExited (MouseEvent e) { hov = false; if (!isFocusOwner()) setBorder(makeBorder(BORDER_IDLE)); }
+                });
+                addFocusListener(new FocusAdapter() {
+                    public void focusGained(FocusEvent e) { setBorder(makeBorder(BORDER_FOC));                      }
+                    public void focusLost  (FocusEvent e) { setBorder(makeBorder(hov ? BORDER_HOV : BORDER_IDLE)); }
+                });
+            }
+        };
+        f.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+        f.setBackground(WHITE);
+        return f;
+    }
+
+    private Border makeBorder(Color c) {
+        return BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(c, 1, true),
+            BorderFactory.createEmptyBorder(7, 11, 7, 11));
+    }
+
+    // ── Small caps label above each field ─────────────────────────────────────
+    private JLabel makeFieldLabel(String text) {
+        JLabel l = new JLabel(text);
+        l.setFont(new Font("Segoe UI Emoji", Font.BOLD, 11));
+        l.setForeground(Color.decode("#6b7280"));
+        l.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return l;
+    }
+
+    // ── Rounded card wrapper ──────────────────────────────────────────────────
+    private JPanel makeCard(JComponent... contents) {
+        JPanel card = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(WHITE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.setColor(Color.decode("#e5e7eb"));
+                g2.setStroke(new BasicStroke(1f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+                g2.dispose();
+            }
+        };
+        card.setOpaque(false);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        for (JComponent c : contents) {
+            c.setAlignmentX(Component.LEFT_ALIGNMENT);
+            card.add(c);
+            card.add(Box.createVerticalStrut(5));
+        }
+        return card;
+    }
+
+    // ── Pill / rounded button ─────────────────────────────────────────────────
+    private JButton makePillBtn(String text, Color bg, Color fg) {
+        JButton btn = new JButton(text) {
+            boolean hov = false;
+            { setContentAreaFilled(false); setOpaque(false);
+              addMouseListener(new MouseAdapter() {
+                public void mouseEntered(MouseEvent e) { hov = true;  repaint(); }
+                public void mouseExited (MouseEvent e) { hov = false; repaint(); }
+              });
+            }
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(hov ? bg.darker() : bg);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+            @Override public void paintBorder(Graphics g) {}
+        };
+        btn.setFont(new Font("Segoe UI Emoji", Font.BOLD, 13));
+        btn.setForeground(fg);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createEmptyBorder(9, 22, 9, 22));
+        return btn;
+    }
+
+    // ── Small inline button ───────────────────────────────────────────────────
+    private JButton makeSmallBtn(String text, Color bg, Color fg) {
+        JButton btn = new JButton(text) {
+            boolean hov = false;
+            { setContentAreaFilled(false); setOpaque(false);
+              addMouseListener(new MouseAdapter() {
+                public void mouseEntered(MouseEvent e) { hov = true;  repaint(); }
+                public void mouseExited (MouseEvent e) { hov = false; repaint(); }
+              });
+            }
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(hov ? bg.darker() : bg);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+            @Override public void paintBorder(Graphics g) {}
+        };
+        btn.setFont(new Font("Segoe UI Emoji", Font.BOLD, 12));
+        btn.setForeground(fg);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createEmptyBorder(7, 14, 7, 14));
+        return btn;
+    }
+
+    // ── Fix spinner arrow direction ───────────────────────────────────────────
     private void fixSpinnerArrows(JSpinner spinner) {
-        JComponent editor = spinner.getEditor();
-        // The spinner UI has two arrow buttons; find them
         for (Component c : spinner.getComponents()) {
             if (c instanceof JButton btn) {
-                // The increment button already shows "▲" by default in most L&Fs,
-                // but the decrement shows "▼" or "−". We identify it by its action:
-                // actionCommand is "increment" or "decrement".
                 String action = btn.getActionCommand();
                 if ("decrement".equals(action)) {
                     btn.setText("▲");
-                    btn.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-                    btn.setBackground(Color.decode("#e0e0e0"));
-                    btn.setForeground(Color.decode("#333333"));
-                    btn.setFocusPainted(false);
-                    btn.setBorderPainted(false);
+                    btn.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 10));
+                    btn.setBackground(Color.decode("#e5e7eb"));
+                    btn.setForeground(LBL_COLOR);
+                    btn.setFocusPainted(false); btn.setBorderPainted(false);
                     btn.setContentAreaFilled(true);
                     btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-                    btn.setToolTipText("Decrease");
-
-                    // Wire it up: clicking ▲ on the BOTTOM button still decrements,
-                    // so swap — remove original listeners and add increment action
-                    for (java.awt.event.ActionListener al : btn.getActionListeners()) {
-                        btn.removeActionListener(al);
-                    }
+                    for (ActionListener al : btn.getActionListeners()) btn.removeActionListener(al);
                     btn.addActionListener(e -> {
-                        try {
-                            spinner.commitEdit();
-                        } catch (java.text.ParseException ignored) {
-                        }
-                        SpinnerModel model = spinner.getModel();
-                        Object next = model.getNextValue();
-                        if (next != null)
-                            model.setValue(next);
+                        try { spinner.commitEdit(); } catch (java.text.ParseException ignored) {}
+                        Object next = spinner.getModel().getNextValue();
+                        if (next != null) spinner.getModel().setValue(next);
                     });
                 }
                 if ("increment".equals(action)) {
                     btn.setText("▼");
-                    btn.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-                    btn.setBackground(Color.decode("#e0e0e0"));
-                    btn.setForeground(Color.decode("#333333"));
-                    btn.setFocusPainted(false);
-                    btn.setBorderPainted(false);
+                    btn.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 10));
+                    btn.setBackground(Color.decode("#e5e7eb"));
+                    btn.setForeground(LBL_COLOR);
+                    btn.setFocusPainted(false); btn.setBorderPainted(false);
                     btn.setContentAreaFilled(true);
                     btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-                    btn.setToolTipText("Increase");
-
-                    for (java.awt.event.ActionListener al : btn.getActionListeners()) {
-                        btn.removeActionListener(al);
-                    }
+                    for (ActionListener al : btn.getActionListeners()) btn.removeActionListener(al);
                     btn.addActionListener(e -> {
-                        try {
-                            spinner.commitEdit();
-                        } catch (java.text.ParseException ignored) {
-                        }
-                        SpinnerModel model = spinner.getModel();
-                        Object prev = model.getPreviousValue();
-                        if (prev != null)
-                            model.setValue(prev);
+                        try { spinner.commitEdit(); } catch (java.text.ParseException ignored) {}
+                        Object prev = spinner.getModel().getPreviousValue();
+                        if (prev != null) spinner.getModel().setValue(prev);
                     });
                 }
             }
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
     public void showDetailView(Item item) {
         this.currentItem = item;
         boolean isNew = (item == null);
-        setTitle(isNew ? "Add new" : "Edit");
-        setSize(420, 580);
+        setTitle(isNew ? "Add Item" : "Edit Item");
+        setSize(460, 620);
         setLocationRelativeTo(getParent());
-        setLayout(new BorderLayout(10, 10));
-        getContentPane().setBackground(Color.decode("#cdd0d5"));
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setLayout(new BorderLayout());
+        getContentPane().setBackground(BG);
 
-        // ─── Header ───────────────────────────────────────────
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(isNew ? Color.decode("#004e86") : Color.decode("#094654")); // Header ของ Add/Edit ?
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(14, 20, 14, 20));
+        // ── HEADER ────────────────────────────────────────────────────────────
+        Color hdrFrom = isNew ? Color.decode("#004e86") : Color.decode("#0a3d4a");
+        Color hdrTo   = isNew ? Color.decode("#0369a1") : Color.decode("#0e5568");
 
-        JLabel titleLbl = new JLabel(isNew ? "Add new" : "Edit: " + item.getName());
-        titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 17));
-        titleLbl.setForeground(Color.decode("#ffffff")); // Color.decode("#2563eb")
-        headerPanel.add(titleLbl);
-        add(headerPanel, BorderLayout.NORTH);
+        JPanel header = new JPanel(new BorderLayout()) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setPaint(new GradientPaint(0, 0, hdrFrom, getWidth(), getHeight(), hdrTo));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.dispose();
+            }
+        };
+        header.setOpaque(false);
+        header.setBorder(BorderFactory.createEmptyBorder(22, 28, 20, 28));
 
-        // ─── Form ─────────────────────────────────────────────
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBackground(Color.decode("#ffffff"));
-        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 28, 10, 28));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 6, 8, 6);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        // circle icon
+        JLabel iconLbl = new JLabel(isNew ? "+" : "✎") {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(255, 255, 255, 30));
+                g2.fillOval(0, 0, getWidth(), getHeight());
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        iconLbl.setFont(new Font("Segoe UI Emoji", Font.BOLD, 20));
+        iconLbl.setForeground(new Color(255, 255, 255, 200));
+        iconLbl.setHorizontalAlignment(SwingConstants.CENTER);
+        iconLbl.setPreferredSize(new Dimension(44, 44));
+        iconLbl.setOpaque(false);
 
-        Font labelFont = new Font("Segoe UI", Font.BOLD, 13);
-        Font fieldFont = new Font("Segoe UI", Font.PLAIN, 14);
+        JLabel titleLbl = new JLabel(isNew ? "Add New Item" : "Edit: " + item.getName());
+        titleLbl.setFont(new Font("Segoe UI Emoji", Font.BOLD, 20));
+        titleLbl.setForeground(Color.WHITE);
+
+        JLabel subtitleLbl = new JLabel(isNew ? "Fill in the details below" : "Update the item information");
+        subtitleLbl.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 12));
+        subtitleLbl.setForeground(new Color(255, 255, 255, 160));
+
+        JPanel titleBlock = new JPanel(new BorderLayout(0, 3));
+        titleBlock.setOpaque(false);
+        titleBlock.add(titleLbl, BorderLayout.NORTH);
+        titleBlock.add(subtitleLbl, BorderLayout.CENTER);
+
+        JPanel headerInner = new JPanel(new BorderLayout(14, 0));
+        headerInner.setOpaque(false);
+        headerInner.add(iconLbl, BorderLayout.WEST);
+        headerInner.add(titleBlock, BorderLayout.CENTER);
+        header.add(headerInner, BorderLayout.CENTER);
+        add(header, BorderLayout.NORTH);
+
+        // ── BODY ──────────────────────────────────────────────────────────────
+        Font fieldFont = new Font("Segoe UI Emoji", Font.PLAIN, 14);
+
+        JPanel body = new JPanel();
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+        body.setBackground(BG);
+        body.setBorder(BorderFactory.createEmptyBorder(16, 18, 16, 18));
 
         // Name
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 0;
-        JLabel nameLbl = new JLabel("Name:");
-        nameLbl.setFont(labelFont);
-        formPanel.add(nameLbl, gbc);
-
-        gbc.gridx = 1;
-        gbc.weightx = 1;
-        nameField = new JTextField();
+        nameField = makeStyledField(isNew ? "" : item.getName());
         nameField.setDocument(new javax.swing.text.PlainDocument() {
-            @Override
-            public void insertString(int offs, String str, javax.swing.text.AttributeSet a)
+            @Override public void insertString(int offs, String str, javax.swing.text.AttributeSet a)
                     throws javax.swing.text.BadLocationException {
-                if (str == null)
-                    return;
-                if ((getLength() + str.length()) <= 30)
-                    super.insertString(offs, str, a);
+                if (str == null) return;
+                if ((getLength() + str.length()) <= 30) super.insertString(offs, str, a);
             }
         });
         nameField.setText(isNew ? "" : item.getName());
-        nameField.setFont(fieldFont);
-        nameField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.decode("#d1d5db")),
-                BorderFactory.createEmptyBorder(6, 10, 6, 10)));
 
         JLabel charCountLbl = new JLabel((isNew ? "0" : String.valueOf(item.getName().length())) + " / 30");
-        charCountLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        charCountLbl.setForeground(Color.decode("#9ca3af"));
+        charCountLbl.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 11));
+        charCountLbl.setForeground(HINT_COLOR);
         charCountLbl.setHorizontalAlignment(SwingConstants.RIGHT);
+        charCountLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         nameField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            private void update() {
+            void update() {
                 int len = nameField.getText().length();
                 charCountLbl.setText(len + " / 30");
-                charCountLbl.setForeground(len == 30 ? Color.decode("#dc2626") : Color.decode("#9ca3af"));
+                charCountLbl.setForeground(len == 30 ? Color.decode("#dc2626") : HINT_COLOR);
             }
-
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                update();
-            }
-
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                update();
-            }
-
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                update();
-            }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { update(); }
         });
 
-        JPanel namePanel = new JPanel(new BorderLayout(0, 2));
-        namePanel.setBackground(Color.WHITE);
-        namePanel.add(nameField, BorderLayout.CENTER);
-        namePanel.add(charCountLbl, BorderLayout.SOUTH);
-        formPanel.add(namePanel, gbc);
+        JPanel nameFieldPanel = new JPanel(new BorderLayout(0, 2));
+        nameFieldPanel.setOpaque(false);
+        nameFieldPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        nameFieldPanel.add(nameField, BorderLayout.CENTER);
+        nameFieldPanel.add(charCountLbl, BorderLayout.SOUTH);
 
-        // Description (รองจาก Name)
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.weightx = 0;
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        JLabel descLbl = new JLabel("Description:");
-        descLbl.setFont(labelFont);
-        formPanel.add(descLbl, gbc);
+        body.add(makeCard(makeFieldLabel("ITEM NAME"), nameFieldPanel));
+        body.add(Box.createVerticalStrut(10));
 
-        gbc.gridx = 1;
-        gbc.weightx = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        descriptionArea = new JTextArea(3, 20);
+        // Description
+        descriptionArea = new JTextArea(isNew ? "" : item.getDescription(), 3, 20);
         descriptionArea.setFont(fieldFont);
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
-        descriptionArea.setText(isNew ? "" : item.getDescription());
-        descriptionArea.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.decode("#d1d5db")),
-                BorderFactory.createEmptyBorder(6, 10, 6, 10)));
-        formPanel.add(descriptionArea, gbc);
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        descriptionArea.setBackground(WHITE);
+        descriptionArea.setBorder(makeBorder(BORDER_IDLE));
+        descriptionArea.addFocusListener(new FocusAdapter() {
+            public void focusGained(FocusEvent e) { descriptionArea.setBorder(makeBorder(BORDER_FOC)); }
+            public void focusLost  (FocusEvent e) { descriptionArea.setBorder(makeBorder(BORDER_IDLE)); }
+        });
+        descriptionArea.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { if (!descriptionArea.isFocusOwner()) descriptionArea.setBorder(makeBorder(BORDER_HOV)); }
+            public void mouseExited (MouseEvent e) { if (!descriptionArea.isFocusOwner()) descriptionArea.setBorder(makeBorder(BORDER_IDLE)); }
+        });
 
-        // Quantity
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.weightx = 0;
-        JLabel qtyLbl = new JLabel("Quantity:");
-        qtyLbl.setFont(labelFont);
-        formPanel.add(qtyLbl, gbc);
+        JScrollPane descScroll = new JScrollPane(descriptionArea);
+        descScroll.setBorder(BorderFactory.createEmptyBorder());
+        descScroll.setOpaque(false);
+        descScroll.getViewport().setOpaque(false);
+        descScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        gbc.gridx = 1;
-        gbc.weightx = 1;
-        quantitySpinner = new JSpinner(new SpinnerNumberModel(
-                isNew ? 0 : item.getQuantity(), 0, 99999, 1));
+        body.add(makeCard(makeFieldLabel("DESCRIPTION  (optional)"), descScroll));
+        body.add(Box.createVerticalStrut(10));
+
+        // Quantity + Price (2-column)
+        quantitySpinner = new JSpinner(new SpinnerNumberModel(isNew ? 0 : item.getQuantity(), 0, 99999, 1));
         quantitySpinner.setFont(fieldFont);
         fixSpinnerArrows(quantitySpinner);
-        formPanel.add(quantitySpinner, gbc);
+        quantitySpinner.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Price
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.weightx = 0;
-        JLabel priceLbl = new JLabel("Price (฿):");
-        priceLbl.setFont(labelFont);
-        formPanel.add(priceLbl, gbc);
-
-        gbc.gridx = 1;
-        gbc.weightx = 1;
-        priceSpinner = new JSpinner(new SpinnerNumberModel(
-                isNew ? 0.0 : item.getPrice(), 0.0, 9999999.0, 0.01));
+        priceSpinner = new JSpinner(new SpinnerNumberModel(isNew ? 0.0 : item.getPrice(), 0.0, 9999999.0, 0.01));
         priceSpinner.setFont(fieldFont);
-        JSpinner.NumberEditor priceEditor = new JSpinner.NumberEditor(priceSpinner, "#,##0.00");
-        priceSpinner.setEditor(priceEditor);
+        priceSpinner.setEditor(new JSpinner.NumberEditor(priceSpinner, "#,##0.00"));
         fixSpinnerArrows(priceSpinner);
-        formPanel.add(priceSpinner, gbc);
+        priceSpinner.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Category (dropdown + remove button)
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        gbc.weightx = 0;
-        JLabel catLbl = new JLabel("Category:");
-        catLbl.setFont(labelFont);
-        formPanel.add(catLbl, gbc);
+        JPanel twoCol = new JPanel(new GridLayout(1, 2, 10, 0));
+        twoCol.setOpaque(false);
+        twoCol.setAlignmentX(Component.LEFT_ALIGNMENT);
+        twoCol.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+        twoCol.add(makeCard(makeFieldLabel("QUANTITY"), quantitySpinner));
+        twoCol.add(makeCard(makeFieldLabel("PRICE  (THB)"), priceSpinner));
+        body.add(twoCol);
+        body.add(Box.createVerticalStrut(10));
 
-        gbc.gridx = 1;
-        gbc.weightx = 1;
+        // Category
         List<String> cats = controller.getItemModel().getCategories();
         categoryCombo = new JComboBox<>(cats.toArray(new String[0]));
-        if (!isNew)
-            categoryCombo.setSelectedItem(item.getCategory());
+        if (!isNew) categoryCombo.setSelectedItem(item.getCategory());
         categoryCombo.setFont(fieldFont);
+        categoryCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // ปุ่ม Remove category
-        JButton removeCatBtn = new JButton("Remove");
-        removeCatBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        removeCatBtn.setBackground(Color.decode("#9e0000"));
-        removeCatBtn.setForeground(Color.decode("#ffffff"));
-        removeCatBtn.setBorderPainted(false);
-        removeCatBtn.setFocusPainted(false);
-        removeCatBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        removeCatBtn.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
+        JButton removeCatBtn = makeSmallBtn("✕ Remove", Color.decode("#fee2e2"), Color.decode("#9e0000"));
         removeCatBtn.addActionListener(e -> {
-            String selectedCat = (String) categoryCombo.getSelectedItem();
-            if (selectedCat == null)
-                return;
-
-            int confirm = JOptionPane.showConfirmDialog(
-                    this,
-                    "ลบ category \"" + selectedCat + "\" ออกจากรายการ?",
-                    "ยืนยันการลบ",
-                    JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                controller.getItemModel().removeCategory(selectedCat);
-                categoryCombo.removeItem(selectedCat);
+            String sel = (String) categoryCombo.getSelectedItem();
+            if (sel == null) return;
+            int ok = JOptionPane.showConfirmDialog(this,
+                "Remove category \"" + sel + "\" from list?", "Confirm Remove", JOptionPane.YES_NO_OPTION);
+            if (ok == JOptionPane.YES_OPTION) {
+                controller.getItemModel().removeCategory(sel);
+                categoryCombo.removeItem(sel);
             }
         });
 
-        JPanel catPanel = new JPanel(new BorderLayout(6, 0));
-        catPanel.setBackground(Color.WHITE);
-        catPanel.add(categoryCombo, BorderLayout.CENTER);
-        catPanel.add(removeCatBtn, BorderLayout.EAST);
-        formPanel.add(catPanel, gbc);
+        JPanel catRow = new JPanel(new BorderLayout(8, 0));
+        catRow.setOpaque(false);
+        catRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        catRow.add(categoryCombo, BorderLayout.CENTER);
+        catRow.add(removeCatBtn, BorderLayout.EAST);
 
-        // Add new category
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        gbc.weightx = 0;
-        JLabel newCatLbl = new JLabel("new Category:");
-        newCatLbl.setFont(labelFont);
-        formPanel.add(newCatLbl, gbc);
+        JSeparator sep = new JSeparator();
+        sep.setForeground(Color.decode("#e5e7eb"));
+        sep.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
 
-        gbc.gridx = 1;
-        gbc.weightx = 1;
-        JPanel newCatPanel = new JPanel(new BorderLayout(6, 0));
-        newCatPanel.setBackground(Color.WHITE);
-        newCategoryField = new JTextField();
-        newCategoryField.setFont(fieldFont);
-        newCategoryField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.decode("#d1d5db")),
-                BorderFactory.createEmptyBorder(6, 10, 6, 10)));
-        JButton addCatBtn = new JButton("Add");
-        addCatBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        addCatBtn.setBackground(Color.decode("#004e86"));
-        addCatBtn.setForeground(Color.decode("#ffffff"));
-        addCatBtn.setBorderPainted(false);
-        addCatBtn.setFocusPainted(false);
-        addCatBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        newCategoryField = makeStyledField("");
+        newCategoryField.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 13));
+
+        JButton addCatBtn = makeSmallBtn("+ Add", Color.decode("#dbeafe"), Color.decode("#1d4ed8"));
         addCatBtn.addActionListener(e -> {
             String newCat = newCategoryField.getText().trim();
             if (!newCat.isEmpty()) {
@@ -312,58 +388,69 @@ public class DetailView extends JDialog {
                 newCategoryField.setText("");
             }
         });
-        newCatPanel.add(newCategoryField, BorderLayout.CENTER);
-        newCatPanel.add(addCatBtn, BorderLayout.EAST);
-        formPanel.add(newCatPanel, gbc);
 
-        add(formPanel, BorderLayout.CENTER);
+        JPanel newCatRow = new JPanel(new BorderLayout(8, 0));
+        newCatRow.setOpaque(false);
+        newCatRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        newCatRow.add(newCategoryField, BorderLayout.CENTER);
+        newCatRow.add(addCatBtn, BorderLayout.EAST);
 
-        // ─── Buttons ──────────────────────────────────────────
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 12));
-        btnPanel.setBackground(Color.decode("#f9fafb"));
-        btnPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.decode("#e5e7eb")));
+        JLabel newCatHint = new JLabel("Type a name and click + Add");
+        newCatHint.setFont(new Font("Segoe UI Emoji", Font.ITALIC, 11));
+        newCatHint.setForeground(HINT_COLOR);
+        newCatHint.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton cancelBtn = new JButton("cancel");
-        cancelBtn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        cancelBtn.setBackground(Color.decode("#e5e7eb"));
-        cancelBtn.setForeground(Color.decode("#374151"));
-        cancelBtn.setBorderPainted(false);
-        cancelBtn.setFocusPainted(false);
-        cancelBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        cancelBtn.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
+        body.add(makeCard(
+            makeFieldLabel("CATEGORY"),
+            catRow,
+            sep,
+            makeFieldLabel("ADD NEW CATEGORY"),
+            newCatRow,
+            newCatHint
+        ));
+
+        body.add(Box.createVerticalGlue());
+
+        JScrollPane scrollPane = new JScrollPane(body);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getViewport().setBackground(BG);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // ── FOOTER ────────────────────────────────────────────────────────────
+        JPanel footer = new JPanel(new BorderLayout());
+        footer.setBackground(WHITE);
+        footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.decode("#e5e7eb")));
+
+        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 12));
+        btnRow.setOpaque(false);
+
+        JButton cancelBtn = makePillBtn("Cancel", Color.decode("#e5e7eb"), LBL_COLOR);
         cancelBtn.addActionListener(e -> dispose());
 
-        JButton saveBtn = new JButton("save");
-        saveBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        saveBtn.setBackground(Color.decode("#129469"));
-        saveBtn.setForeground(Color.WHITE);
-        saveBtn.setBorderPainted(false);
-        saveBtn.setFocusPainted(false);
-        saveBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        saveBtn.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
+        Color saveColor = isNew ? Color.decode("#004e86") : Color.decode("#129469");
+        JButton saveBtn = makePillBtn(isNew ? "+ Add Item" : "Save Changes", saveColor, WHITE);
         saveBtn.addActionListener(e -> {
             String name = nameField.getText().trim();
             if (name.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please enter product name", "Alert", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Please enter a product name.", "Required", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             boolean isDuplicate = controller.getItemModel().getItems().stream()
-                    .anyMatch(i -> i.getName().replaceAll("\\s+", "").equalsIgnoreCase(name.replaceAll("\\s+", ""))
-                            && (isNew || !i.getName().equalsIgnoreCase(currentItem.getName())));
+                .anyMatch(i -> i.getName().replaceAll("\\s+", "").equalsIgnoreCase(name.replaceAll("\\s+", ""))
+                    && (isNew || !i.getName().equalsIgnoreCase(currentItem.getName())));
             if (isDuplicate) {
-                JOptionPane.showMessageDialog(this, "Product name \"" + name + "\" already exists", "Duplicate Name",
-                        JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "\"" + name + "\" already exists.", "Duplicate Name", JOptionPane.WARNING_MESSAGE);
                 nameField.requestFocusInWindow();
                 return;
             }
-            int qty = (int) quantitySpinner.getValue();
-            String cat = (String) categoryCombo.getSelectedItem();
+            int qty      = (int) quantitySpinner.getValue();
+            String cat   = (String) categoryCombo.getSelectedItem();
             double price = ((Number) priceSpinner.getValue()).doubleValue();
-            String desc = descriptionArea.getText().trim();
+            String desc  = descriptionArea.getText().trim();
 
             if (isNew) {
-                Item newItem = new Item(name, qty, cat, price, desc);
-                controller.getItemModel().addItem(newItem);
+                controller.getItemModel().addItem(new Item(name, qty, cat, price, desc));
             } else {
                 String oldName = currentItem.getName();
                 currentItem.setName(name);
@@ -377,9 +464,10 @@ public class DetailView extends JDialog {
             dispose();
         });
 
-        btnPanel.add(cancelBtn);
-        btnPanel.add(saveBtn);
-        add(btnPanel, BorderLayout.SOUTH);
+        btnRow.add(cancelBtn);
+        btnRow.add(saveBtn);
+        footer.add(btnRow, BorderLayout.EAST);
+        add(footer, BorderLayout.SOUTH);
 
         setVisible(true);
     }
