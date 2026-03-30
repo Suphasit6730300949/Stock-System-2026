@@ -90,14 +90,12 @@ public class MainController {
             body.add(val, gbc);
         }
 
-        // ─ running row counter (continues after the main rows loop) ─
-        int r = rows.length;
-
         // ─ Description ─
         String desc = item.getDescription();
         if (desc != null && !desc.isBlank()) {
+            int descRow = rows.length;
             gbc.gridx = 0;
-            gbc.gridy = r;
+            gbc.gridy = descRow;
             gbc.weightx = 0;
             gbc.anchor = GridBagConstraints.NORTHWEST;
             JLabel descLbl = new JLabel("Description:");
@@ -113,17 +111,18 @@ public class MainController {
             descArea.setLineWrap(true);
             descArea.setWrapStyleWord(true);
             descArea.setEditable(false);
+            descArea.setFocusable(false);
+            descArea.setCursor(Cursor.getDefaultCursor());
             descArea.setOpaque(false);
             descArea.setBorder(BorderFactory.createEmptyBorder());
             body.add(descArea, gbc);
             gbc.fill = GridBagConstraints.NONE;
             gbc.anchor = GridBagConstraints.WEST;
-            r++;
         }
 
         // ─ เส้นคั่น ─
         gbc.gridx = 0;
-        gbc.gridy = r++;
+        gbc.gridy = rows.length;
         gbc.gridwidth = 2;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -136,6 +135,7 @@ public class MainController {
         gbc.insets = new Insets(5, 6, 5, 6);
 
         // ─ วันที่เพิ่ม ─
+        int r = rows.length + 1;
         gbc.gridx = 0;
         gbc.gridy = r;
         gbc.weightx = 0;
@@ -153,10 +153,10 @@ public class MainController {
         addedVal.setFont(dateFont);
         addedVal.setForeground(Color.decode("#374151"));
         body.add(addedVal, gbc);
-        r++;
 
         // ─ แก้ไขล่าสุด (แสดงเฉพาะเมื่อเคย edit) ─
         if (item.getUpdatedAt() != null) {
+            r++;
             gbc.gridx = 0;
             gbc.gridy = r;
             gbc.weightx = 0;
