@@ -9,7 +9,7 @@ import java.awt.image.BufferedImage;
 
 public class ShadowLabel extends JLabel {
 
-    private static final int PADDING = 6;   // ระยะขอบรอบข้อความ
+    private static final int PADDING = 6; // ระยะขอบรอบข้อความ
     private static final int SHADOW_DX = 3; // เงาเลื่อนขวา
     private static final int SHADOW_DY = 1; // เงาเลื่อนลง
 
@@ -20,20 +20,21 @@ public class ShadowLabel extends JLabel {
         setOpaque(false);
     }
 
-    //Fix 1: บอก layout manager ว่า component ต้องการพื้นที่เท่าไหร่
+    // Fix 1: บอก layout manager ว่า component ต้องการพื้นที่เท่าไหร่
     @Override
     public Dimension getPreferredSize() {
         FontRenderContext frc = getFRC();
         TextLayout layout = new TextLayout(getText(), getFont(), frc);
         java.awt.geom.Rectangle2D bounds = layout.getBounds();
-        int w = (int) Math.ceil(bounds.getWidth())  + SHADOW_DX + PADDING * 2;
+        int w = (int) Math.ceil(bounds.getWidth()) + SHADOW_DX + PADDING * 2;
         int h = (int) Math.ceil(bounds.getHeight()) + SHADOW_DY + PADDING * 2;
         return new Dimension(w, h);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-        if (getText() == null || getText().isEmpty()) return;
+        if (getText() == null || getText().isEmpty())
+            return;
 
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,

@@ -19,11 +19,10 @@ public class MainController {
     // Called when DashboardView requests delete
     public void deleteItem(Item item) {
         int confirm = JOptionPane.showConfirmDialog(
-            dashboardView,
-            "delete " + item.getName() + " sure?",
-            "delete confirm",
-            JOptionPane.YES_NO_OPTION
-        );
+                dashboardView,
+                "delete " + item.getName() + " sure?",
+                "delete confirm",
+                JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             itemModel.deleteItem(item);
             dashboardView.refreshTable();

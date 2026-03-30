@@ -52,7 +52,7 @@ public class ItemModel {
         }
     }
 
-    //ลบ category ออกจาก list และ MongoDB
+    // ลบ category ออกจาก list และ MongoDB
     public void removeCategory(String category) {
         categories.remove(category);
         db.deleteCategory(category);
