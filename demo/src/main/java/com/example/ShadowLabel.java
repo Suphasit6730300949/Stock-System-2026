@@ -7,11 +7,18 @@ import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 
+/**
+ * View utility: JLabel ที่วาดข้อความพร้อม drop-shadow ด้วย Graphics2D
+ *
+ * ใช้ TextLayout.getOutline() แทน drawString เพื่อให้ควบคุมเงาได้ละเอียด
+ * และ override getPreferredSize() ด้วย ascent+descent+leading
+ * เพื่อให้ BoxLayout คำนวณความสูงถูกต้องและไม่ตัดหัวตัวอักษร
+ */
 public class ShadowLabel extends JLabel {
 
-    private static final int PADDING = 6; // ระยะขอบรอบข้อความ
-    private static final int SHADOW_DX = 3; // เงาเลื่อนขวา
-    private static final int SHADOW_DY = 1; // เงาเลื่อนลง
+    private static final int PADDING   = 6; // ระยะขอบรอบข้อความ (px)
+    private static final int SHADOW_DX = 3; // เงาเลื่อนขวา (px)
+    private static final int SHADOW_DY = 1; // เงาเลื่อนลง (px)
 
     public ShadowLabel(String text) {
         super(text);
@@ -20,58 +27,57 @@ public class ShadowLabel extends JLabel {
         setOpaque(false);
     }
 
-    // Fix 1: บอก layout manager ว่า component ต้องการพื้นที่เท่าไหร่
-    // ใช้ ascent+descent+leading แทน bounds.getHeight() เพื่อให้ได้ full line height
-    // ป้องกัน layout manager ตัดหัวตัวอักษรออก
+    /**
+     * คำนวณขนาดที่ต้องการจาก font ปัจจุบัน
+     * ใช้ advance (ความกว้างจริงพร้อม bearing) และ ascent+descent+leading
+     * แทน bounds.getWidth/Height() ที่อาจตัด glyph บางส่วนออก
+     */
     @Override
     public Dimension getPreferredSize() {
-        FontRenderContext frc = getFRC();
-        TextLayout layout = new TextLayout(getText(), getFont(), frc);
-        // ใช้ advance แทน bounds.getWidth() เพราะครอบคลุม left/right bearing ด้วย
-        int w = (int) Math.ceil(layout.getAdvance()) + SHADOW_DX + PADDING * 2 + 10;
+        FontRenderContext frc    = getFRC();
+        TextLayout        layout = new TextLayout(getText(), getFont(), frc);
+        int w = (int) Math.ceil(layout.getAdvance())
+                + SHADOW_DX + PADDING * 2 + 10;
         int h = (int) Math.ceil(layout.getAscent() + layout.getDescent() + layout.getLeading())
                 + SHADOW_DY + PADDING * 2;
         return new Dimension(w, h);
     }
 
+    /** วาด drop-shadow แล้วตามด้วยตัวอักษรจริงบนตำแหน่ง baseline ที่ถูกต้อง */
     @Override
     protected void paintComponent(Graphics g) {
-        if (getText() == null || getText().isEmpty())
-            return;
+        if (getText() == null || getText().isEmpty()) return;
 
         Graphics2D g2 = (Graphics2D) g.create();
-        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,      RenderingHints.VALUE_ANTIALIAS_ON);
 
-        TextLayout layout = new TextLayout(getText(), getFont(), g2.getFontRenderContext());
+        TextLayout              layout = new TextLayout(getText(), getFont(), g2.getFontRenderContext());
         java.awt.geom.Rectangle2D bounds = layout.getBounds();
 
-        // Fix 2: คำนวณ baseline จาก bounds.getY() ซึ่งเป็นลบ (offset จาก baseline)
-        // วาดให้ข้อความอยู่กลาง component แนวตั้ง
-        int x = PADDING;
-        int y = (int) Math.ceil(-bounds.getY()) + PADDING; // baseline position
+        // bounds.getY() เป็นค่าลบ (offset จาก baseline ขึ้นไป)
+        // ดังนั้น -bounds.getY() = ระยะจาก top ถึง baseline
+        int x        = PADDING;
+        int baseline = (int) Math.ceil(-bounds.getY()) + PADDING;
 
-        Shape shape = layout.getOutline(AffineTransform.getTranslateInstance(x, y));
+        Shape outline = layout.getOutline(AffineTransform.getTranslateInstance(x, baseline));
 
-        // เงา
+        // เงา (วาดก่อนตัวอักษรจริง)
         g2.setColor(new Color(0, 0, 0, 130));
-        Shape shadow = AffineTransform.getTranslateInstance(SHADOW_DX, SHADOW_DY)
-                .createTransformedShape(shape);
-        g2.fill(shadow);
+        g2.fill(AffineTransform.getTranslateInstance(SHADOW_DX, SHADOW_DY)
+                               .createTransformedShape(outline));
 
-        // ตัวหนังสือจริง
+        // ตัวอักษรจริง
         g2.setColor(getForeground());
-        g2.fill(shape);
+        g2.fill(outline);
 
         g2.dispose();
     }
 
-    // helper: ดึง FontRenderContext โดยไม่ต้องมี Graphics
+    /** สร้าง FontRenderContext โดยไม่ต้องมี Graphics จริง (ใช้ใน getPreferredSize) */
     private FontRenderContext getFRC() {
         BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = img.createGraphics();
+        Graphics2D    g2  = img.createGraphics();
         FontRenderContext frc = g2.getFontRenderContext();
         g2.dispose();
         return frc;
