@@ -194,9 +194,7 @@ public class DetailView extends JDialog {
         descriptionArea.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Color.decode("#d1d5db")),
                 BorderFactory.createEmptyBorder(6, 10, 6, 10)));
-        JScrollPane descScroll = new JScrollPane(descriptionArea);
-        descScroll.setBorder(BorderFactory.createLineBorder(Color.decode("#d1d5db")));
-        formPanel.add(descScroll, gbc);
+        formPanel.add(descriptionArea, gbc);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
